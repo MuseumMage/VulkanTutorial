@@ -12,6 +12,15 @@
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 #include <iostream>
+#include <optional>
+
+struct QueueFamilyIndices
+{
+    std::optional<uint32_t> graphicsFamily;
+    bool isComplete() {
+        return graphicsFamily.has_value();
+    }
+};
 
 class HelloTriangleApplication {
 public:
@@ -41,13 +50,16 @@ private:
     // debug msg
     VkDebugUtilsMessengerEXT debugMessenger;
     
+    //device
+    VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
+    
 private:
     void initWindow();
     void initVulkan();
     void mainLoop();
     void cleanup();
     
-    // vk
+    // vk instance
     void createInstance();
     void destroyInstance();
     
@@ -56,6 +68,7 @@ private:
     VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger);
     void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks* pAllocator);
     void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo);
+    
     static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
         VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
         VkDebugUtilsMessageTypeFlagsEXT messageType,
@@ -66,6 +79,10 @@ private:
         return VK_FALSE;
     }
     
+    // device
+    void pickPhysicalDevice();
+    bool isDeviceSuitable(VkPhysicalDevice device);
+    QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
 };
 
 
