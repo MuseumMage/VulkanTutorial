@@ -50,8 +50,12 @@ private:
     // debug msg
     VkDebugUtilsMessengerEXT debugMessenger;
     
-    //device
+    // physical device
     VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
+    
+    // logical device
+    VkDevice device;
+    VkQueue graphicsQueue;
     
 private:
     void initWindow();
@@ -79,10 +83,14 @@ private:
         return VK_FALSE;
     }
     
-    // device
+    // physical device
     void pickPhysicalDevice();
     bool isDeviceSuitable(VkPhysicalDevice device);
     QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
+    
+    // logical device
+    void createLogicalDevice();
+    void destroyLogicalDevice();
 };
 
 
