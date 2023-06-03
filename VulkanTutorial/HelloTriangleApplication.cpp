@@ -89,14 +89,14 @@ void HelloTriangleApplication::createInstance()
     }
     
     // for mac VK_ERROR_INCOMPATIBLE_DRIVER error
-    std::vector<const char*> requiredExtensions;
+    /*std::vector<const char*> requiredExtensions;
     for(uint32_t i = 0; i < extensions.size(); i++) {
         requiredExtensions.emplace_back(extensions[i]);
     }
     requiredExtensions.emplace_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
     createInfo.flags |= VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
     createInfo.enabledExtensionCount = (uint32_t) requiredExtensions.size();
-    createInfo.ppEnabledExtensionNames = requiredExtensions.data();
+    createInfo.ppEnabledExtensionNames = requiredExtensions.data();*/
     
     if (vkCreateInstance(&createInfo, nullptr, &instance) != VK_SUCCESS)
     {
