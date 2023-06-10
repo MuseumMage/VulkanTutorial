@@ -24,9 +24,17 @@ struct QueueFamilyIndices
     }
 };
 
+struct SwapChainSupportDetails
+{
+    VkSurfaceCapabilitiesKHR capabilities;
+    std::vector<VkSurfaceFormatKHR> formats;
+    std::vector<VkPresentModeKHR> presentModes;
+};
+
 class HelloTriangleApplication {
 public:
-    void run() {
+    void run() 
+    {
         initWindow();
         initVulkan();
         mainLoop();
@@ -62,6 +70,12 @@ private:
     // window surface
     VkSurfaceKHR surface;
     VkQueue presentQueue;
+
+    // swap chain
+    const std::vector<const char*> deviceExtensions = {
+        VK_KHR_SWAPCHAIN_EXTENSION_NAME
+    };
+
     
 private:
     void initWindow();
@@ -91,8 +105,6 @@ private:
     
     // physical device
     void pickPhysicalDevice();
-    bool isDeviceSuitable(VkPhysicalDevice device);
-    QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
     
     // logical device
     void createLogicalDevice();
@@ -101,6 +113,14 @@ private:
     // surface
     void createSurface();
     void destroySurface();
+
+    // swapchain
+
+
+    // utils
+    QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
+    bool isDeviceSuitable(VkPhysicalDevice device);
+    bool checkDeviceExtensionSupport(VkPhysicalDevice device);
 };
 
 
