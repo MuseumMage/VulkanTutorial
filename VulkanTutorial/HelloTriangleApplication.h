@@ -18,8 +18,9 @@
 struct QueueFamilyIndices
 {
     std::optional<uint32_t> graphicsFamily;
+    std::optional<uint32_t> presentFamily;
     bool isComplete() {
-        return graphicsFamily.has_value();
+        return graphicsFamily.has_value() && presentFamily.has_value();
     }
 };
 
@@ -57,6 +58,10 @@ private:
     // logical device
     VkDevice device;
     VkQueue graphicsQueue;
+
+    // window surface
+    VkSurfaceKHR surface;
+    VkQueue presentQueue;
     
 private:
     void initWindow();
@@ -92,6 +97,10 @@ private:
     // logical device
     void createLogicalDevice();
     void destroyLogicalDevice();
+
+    // surface
+    void createSurface();
+    void destroySurface();
 };
 
 
