@@ -47,7 +47,8 @@ void HelloTriangleApplication::cleanup()
 	{
 		DestroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
 	}
-	destroyLogicalDevice();
+	destroySwapChain();
+	destroyDevice();
 	destroySurface();
 	destroyInstance();
 	glfwDestroyWindow(window);
@@ -96,14 +97,16 @@ void HelloTriangleApplication::createInstance()
 	}
 
 	// for mac VK_ERROR_INCOMPATIBLE_DRIVER error
-	/*std::vector<const char*> requiredExtensions;
+#ifdef __APPLE__
+	std::vector<const char*> requiredExtensions;
 	for(uint32_t i = 0; i < extensions.size(); i++) {
 	    requiredExtensions.emplace_back(extensions[i]);
 	}
 	requiredExtensions.emplace_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
 	createInfo.flags |= VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
 	createInfo.enabledExtensionCount = (uint32_t) requiredExtensions.size();
-	createInfo.ppEnabledExtensionNames = requiredExtensions.data();*/
+	createInfo.ppEnabledExtensionNames = requiredExtensions.data();
+#endif
 
 	if (vkCreateInstance(&createInfo, nullptr, &instance) != VK_SUCCESS)
 	{
@@ -203,7 +206,7 @@ void HelloTriangleApplication::createLogicalDevice()
 	vkGetDeviceQueue(device, indices.presentFamily.value(), 0, &presentQueue);
 }
 
-void HelloTriangleApplication::destroyLogicalDevice()
+void HelloTriangleApplication::destroyDevice()
 {
 	vkDestroyDevice(device, nullptr);
 }
@@ -226,9 +229,65 @@ void HelloTriangleApplication::createSwapChain()
 {
 	SwapChainSupportDetails swapChainSupport = querySwapChainSupport(physicalDevice);
 
-    VkSurfaceFormatKHR surfaceFormat = chooseSwapSurfaceFormat(swapChainSupport.formats);
-    VkPresentModeKHR presentMode = chooseSwapPresentMode(swapChainSupport.presentModes);
-    VkExtent2D extent = chooseSwapExtent(swapChainSupport.capabilities);
+	VkSurfaceFormatKHR surfaceFormat = chooseSwapSurfaceFormat(swapChainSupport.formats);
+	VkPresentModeKHR presentMode = chooseSwapPresentMode(swapChainSupport.presentModes);
+	VkExtent2D extent = chooseSwapExtent(swapChainSupport.capabilities);
+
+	uint32_t imageCount = swapChainSupport.capabilities.minImageCount + 1;
+	if (swapChainSupport.capabilities.maxImageCount > 0 && imageCount > swapChainSupport.capabilities.maxImageCount)
+	{
+		imageCount = swapChainSupport.capabilities.maxImageCount;
+	}
+
+	VkSwapchainCreateInfoKHR createInfo{};
+	createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+	createInfo.surface = surface;
+	createInfo.minImageCount = imageCount;
+	createInfo.imageFormat = surfaceFormat.format;
+	createInfo.imageColorSpace = surfaceFormat.colorSpace;
+	createInfo.imageExtent = extent;
+	createInfo.imageArrayLayers = 1;
+	createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+
+	// multiple queue families
+	QueueFamilyIndices indices = findQueueFamilies(physicalDevice);
+	uint32_t queueFamilyIndices[] = {indices.graphicsFamily.value(), indices.presentFamily.value()};
+	if (indices.graphicsFamily != indices.presentFamily)
+	{
+		createInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;	// images can be used across multiple queue families
+																	//without explicit ownership transfers
+		createInfo.queueFamilyIndexCount = 2;					// specify how many queue families will share images
+		createInfo.pQueueFamilyIndices = queueFamilyIndices;	// specify which queue families can access images
+	}
+	else
+	{
+		createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+		createInfo.queueFamilyIndexCount = 0; // Optional
+		createInfo.pQueueFamilyIndices = nullptr; // Optional
+	}
+	createInfo.preTransform = swapChainSupport.capabilities.currentTransform; // transform to apply to images
+	createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;	// ignore alpha channel
+	createInfo.presentMode = presentMode;							// how to present images to screen
+	createInfo.clipped = VK_TRUE;									// ignore obscured pixels
+	createInfo.oldSwapchain = VK_NULL_HANDLE;
+
+	if (vkCreateSwapchainKHR(device, &createInfo, nullptr, &swapChain) != VK_SUCCESS) 
+	{
+		throw std::runtime_error("failed to create swap chain!");
+	}
+
+	// Retrieving swap chain images
+	vkGetSwapchainImagesKHR(device, swapChain, &imageCount, nullptr);
+	swapChainImages.resize(imageCount);
+	vkGetSwapchainImagesKHR(device, swapChain, &imageCount, swapChainImages.data());
+
+	swapChainImageFormat = surfaceFormat.format;
+	swapChainExtent = extent;
+}
+
+void HelloTriangleApplication::destroySwapChain()
+{
+	vkDestroySwapchainKHR(device, swapChain, nullptr);
 }
 
 // consider both device and surface (capabilities)

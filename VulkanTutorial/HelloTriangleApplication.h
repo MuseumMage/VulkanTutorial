@@ -72,10 +72,15 @@ private:
     VkQueue presentQueue;
 
     // swap chain
+    VkSwapchainKHR swapChain;
+    std::vector<VkImage> swapChainImages;
+    VkFormat swapChainImageFormat;
+	VkExtent2D swapChainExtent;
+
     const std::vector<const char*> deviceExtensions = {
         VK_KHR_SWAPCHAIN_EXTENSION_NAME
     };
-
+	
     
 private:
     void initWindow();
@@ -108,7 +113,7 @@ private:
     
     // logical device
     void createLogicalDevice();
-    void destroyLogicalDevice();
+    void destroyDevice();
 
     // surface
     void createSurface();
@@ -116,6 +121,7 @@ private:
 
     // swapchain
     void createSwapChain();
+    void destroySwapChain();
     SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device);
     VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
     VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR> availablePresentModes);
