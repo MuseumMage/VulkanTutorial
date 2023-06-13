@@ -80,6 +80,9 @@ private:
     const std::vector<const char*> deviceExtensions = {
         VK_KHR_SWAPCHAIN_EXTENSION_NAME
     };
+
+    // ImageViews
+    std::vector<VkImageView> swapChainImageViews;
 	
     
 private:
@@ -126,6 +129,10 @@ private:
     VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
     VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR> availablePresentModes);
     VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
+
+    // ImageView
+    void createImageViews();
+    void destroyImageViews();
 
     // utils
     QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
