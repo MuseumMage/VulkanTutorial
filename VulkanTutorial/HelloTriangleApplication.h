@@ -134,6 +134,9 @@ private:
     void createImageViews();
     void destroyImageViews();
 
+    // Graphics Pipeline
+    void createGraphicsPipeline();
+
     // utils
     QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
     bool isDeviceSuitable(VkPhysicalDevice device);
