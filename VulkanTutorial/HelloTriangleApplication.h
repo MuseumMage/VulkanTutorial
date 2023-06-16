@@ -136,6 +136,7 @@ private:
 
     // Graphics Pipeline
     void createGraphicsPipeline();
+    VkShaderModule createShaderModule(const std::vector<char>& code);
 
     // utils
     QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);

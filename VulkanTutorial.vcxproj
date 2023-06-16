@@ -87,6 +87,10 @@
     <ClInclude Include="vulkantutorial\HelloTriangleApplication.h" />
     <ClInclude Include="vulkantutorial\Utils.h" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="VulkanTutorial\shader\Shader.frag" />
+    <None Include="VulkanTutorial\shader\Shader.vert" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

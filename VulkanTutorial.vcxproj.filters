@@ -30,4 +30,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="VulkanTutorial\shader\Shader.vert">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="VulkanTutorial\shader\Shader.frag">
+      <Filter>Resource Files</Filter>
+    </None>
+  </ItemGroup>
 </Project>
