@@ -83,7 +83,9 @@ private:
 
     // ImageViews
     std::vector<VkImageView> swapChainImageViews;
-	
+
+    // Graphics pipeline
+    VkPipelineLayout pipelineLayout;
     
 private:
     void initWindow();
@@ -136,6 +138,7 @@ private:
 
     // Graphics Pipeline
     void createGraphicsPipeline();
+    void destroyGraphicsPipeline();
     VkShaderModule createShaderModule(const std::vector<char>& code);
 
     // utils
