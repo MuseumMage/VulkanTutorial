@@ -86,6 +86,9 @@ private:
 
     // Graphics pipeline
     VkPipelineLayout pipelineLayout;
+
+    // Render pass
+	VkRenderPass renderPass;
     
 private:
     void initWindow();
@@ -140,6 +143,10 @@ private:
     void createGraphicsPipeline();
     void destroyGraphicsPipeline();
     VkShaderModule createShaderModule(const std::vector<char>& code);
+
+    // Render Pass
+    void createRenderPass();
+    void destroyRenderPass();
 
     // utils
     QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);

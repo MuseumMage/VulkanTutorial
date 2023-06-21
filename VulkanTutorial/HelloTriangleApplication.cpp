@@ -32,6 +32,7 @@ void HelloTriangleApplication::initVulkan()
 	createLogicalDevice();
 	createSwapChain();
 	createImageViews();
+	createRenderPass();
 	createGraphicsPipeline();
 }
 
@@ -49,6 +50,8 @@ void HelloTriangleApplication::cleanup()
 	{
 		DestroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
 	}
+	destroyRenderPass();
+	destroyGraphicsPipeline();
 	destroySwapChain();
 	destroyDevice();
 	destroySurface();
@@ -558,6 +561,55 @@ VkShaderModule HelloTriangleApplication::createShaderModule(const std::vector<ch
 		throw std::runtime_error("failed to create shader module!");
 	}
 	return shaderModule;
+}
+
+void HelloTriangleApplication::createRenderPass()
+{
+	// Attachment descriptions
+	VkAttachmentDescription colorAttachment{};
+    colorAttachment.format = swapChainImageFormat; // Format should be the same as swap chain images
+    colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT; // No multisampling
+
+	// VK_ATTACHMENT_LOAD_OP_LOAD: Preserve the existing contents of the attachment
+	// VK_ATTACHMENT_LOAD_OP_CLEAR: Clear the values to a constant at the start
+	// VK_ATTACHMENT_LOAD_OP_DONT_CARE: Existing contents are undefined; we don't care about them
+	colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR; // Clear values to a constant at the start
+
+	// VK_ATTACHMENT_STORE_OP_STORE: Rendered contents will be stored in memory and can be read later
+	// VK_ATTACHMENT_STORE_OP_DONT_CARE: Contents of the framebuffer will be undefined after the rendering operation
+	colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE; // Rendered contents will be stored in memory and can be read later
+	colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+	colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+
+	colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED; // We don't care about the layout of the image before rendering
+	colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR; // Image will be presented in the swap chain after rendering
+
+	// Subpasses and attachment references
+	VkAttachmentReference colorAttachmentRef{};
+	colorAttachmentRef.attachment = 0; // Index of the attachment description array
+	colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL; // Layout to use during the subpass
+
+	VkSubpassDescription subpass{};
+	subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS; // Pipeline type subpass is to be bound to
+	subpass.colorAttachmentCount = 1; // Number of color attachments
+	subpass.pColorAttachments = &colorAttachmentRef; // Reference to the color attachment
+
+	// Render Pass
+	VkRenderPassCreateInfo renderPassInfo{};
+	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+	renderPassInfo.attachmentCount = 1;
+	renderPassInfo.pAttachments = &colorAttachment;
+	renderPassInfo.subpassCount = 1;
+	renderPassInfo.pSubpasses = &subpass;
+	if (vkCreateRenderPass(device, &renderPassInfo, nullptr, &renderPass) != VK_SUCCESS)
+	{
+		throw std::runtime_error("failed to create render pass!");
+	}
+}
+
+void HelloTriangleApplication::destroyRenderPass()
+{
+    vkDestroyRenderPass(device, renderPass, nullptr);
 }
 
 VkResult HelloTriangleApplication::CreateDebugUtilsMessengerEXT(VkInstance instance,
