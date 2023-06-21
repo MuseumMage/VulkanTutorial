@@ -50,8 +50,8 @@ void HelloTriangleApplication::cleanup()
 	{
 		DestroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
 	}
-	destroyRenderPass();
 	destroyGraphicsPipeline();
+	destroyRenderPass();
 	destroySwapChain();
 	destroyDevice();
 	destroySurface();
@@ -414,6 +414,11 @@ void HelloTriangleApplication::destroyImageViews()
 	}
 }
 
+// 1. Shader stages: the shader modules that define the functionality of the programmable stages of the graphics pipeline
+// 2. Fixed-function state: all of the structures that define the fixed-function stages of the pipeline, like input assembly, rasterizer, viewport and color blending
+// 3. Pipeline layout: the uniform and push values referenced by the shader that can be updated at draw time
+// 4. Render pass: the attachments referenced by the pipeline stages and their usage
+
 void HelloTriangleApplication::createGraphicsPipeline()
 {
 	// Shader
@@ -538,6 +543,30 @@ void HelloTriangleApplication::createGraphicsPipeline()
 	    throw std::runtime_error("failed to create pipeline layout!");
 	}
 
+	// Create graphics pipeline
+	VkGraphicsPipelineCreateInfo pipelineInfo{};
+	pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+	pipelineInfo.stageCount = 2; // Shader stages
+	pipelineInfo.pStages = shaderStages;
+	pipelineInfo.pVertexInputState = &vertexInputInfo;
+	pipelineInfo.pInputAssemblyState = &inputAssembly;
+	pipelineInfo.pViewportState = &viewportState;
+	pipelineInfo.pRasterizationState = &rasterizer;
+	pipelineInfo.pMultisampleState = &multisampling;
+	pipelineInfo.pDepthStencilState = nullptr; // Optional
+	pipelineInfo.pColorBlendState = &colorBlending;
+	pipelineInfo.pDynamicState = &dynamicState;
+	pipelineInfo.layout = pipelineLayout;
+	pipelineInfo.renderPass = renderPass;
+	pipelineInfo.subpass = 0; // Index of subpass in render pass where pipeline will be used
+	pipelineInfo.basePipelineHandle = VK_NULL_HANDLE; // Optional
+	pipelineInfo.basePipelineIndex = -1; // Optional
+
+	if (vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline) != VK_SUCCESS) 
+	{
+		throw std::runtime_error("failed to create graphics pipeline!");
+	}
+
 	// destroy
 	vkDestroyShaderModule(device, fragShaderModule, nullptr);
     vkDestroyShaderModule(device, vertShaderModule, nullptr);
@@ -545,6 +574,7 @@ void HelloTriangleApplication::createGraphicsPipeline()
 
 void HelloTriangleApplication::destroyGraphicsPipeline()
 {
+	vkDestroyPipeline(device, graphicsPipeline, nullptr);
 	vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
 }
 

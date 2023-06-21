@@ -15,6 +15,20 @@
 #include <optional>
 #include <vector>
 
+// Vulkan Tutorial
+// Setup
+//  1. Instance
+//  2. Physical Device
+//  3. Logical Device
+// Presentation
+//  1. Surface
+//  2. Swap Chain
+//  3. Image Views
+// Pipeline
+//  1. Graphics Pipeline
+//  2. Render Pass
+// Drawing
+
 struct QueueFamilyIndices
 {
     std::optional<uint32_t> graphicsFamily;
@@ -86,6 +100,7 @@ private:
 
     // Graphics pipeline
     VkPipelineLayout pipelineLayout;
+    VkPipeline graphicsPipeline;
 
     // Render pass
 	VkRenderPass renderPass;
