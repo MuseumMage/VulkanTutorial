@@ -29,6 +29,7 @@
 //  2. Render Pass
 // Drawing
 //  1. Framebuffers
+//  2. Command pools
 
 struct QueueFamilyIndices
 {
@@ -108,6 +109,10 @@ private:
 
     // Framebuffers
     std::vector<VkFramebuffer> swapChainFramebuffers;
+
+    // Command pools
+    VkCommandPool commandPool;
+    VkCommandBuffer commandBuffer;
     
 private:
     void initWindow();
@@ -170,6 +175,12 @@ private:
     // Framebuffers
     void createFramebuffers();
     void destroyFramebuffers();
+
+    // Command pools
+    void createCommandPool();
+    void destroyCommandPool();
+    void createCommandBuffer();
+    void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
 
     // utils
     QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
