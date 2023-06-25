@@ -28,6 +28,7 @@
 //  1. Graphics Pipeline
 //  2. Render Pass
 // Drawing
+//  1. Framebuffers
 
 struct QueueFamilyIndices
 {
@@ -104,6 +105,9 @@ private:
 
     // Render pass
 	VkRenderPass renderPass;
+
+    // Framebuffers
+    std::vector<VkFramebuffer> swapChainFramebuffers;
     
 private:
     void initWindow();
@@ -162,6 +166,10 @@ private:
     // Render Pass
     void createRenderPass();
     void destroyRenderPass();
+
+    // Framebuffers
+    void createFramebuffers();
+    void destroyFramebuffers();
 
     // utils
     QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
