@@ -30,6 +30,12 @@
 // Drawing
 //  1. Framebuffers
 //  2. Command pools
+//  3. Synchronization
+//      * Wait for the previous frame to finish
+//      * Acquire an image from the swap chain
+//      * Record a command buffer which draws the scene onto that image
+//      * Submit the recorded command buffer
+//      * Present the swap chain image
 
 struct QueueFamilyIndices
 {
@@ -113,6 +119,11 @@ private:
     // Command pools
     VkCommandPool commandPool;
     VkCommandBuffer commandBuffer;
+
+    // Semaphores and Fences
+    VkSemaphore imageAvailableSemaphore;
+	VkSemaphore renderFinishedSemaphore;
+	VkFence inFlightFence;
     
 private:
     void initWindow();
@@ -181,6 +192,11 @@ private:
     void destroyCommandPool();
     void createCommandBuffer();
     void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
+
+    // Draw
+    void drawFrame();
+    void createSyncObjects();
+    void destroySyncObjects();
 
     // utils
     QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
