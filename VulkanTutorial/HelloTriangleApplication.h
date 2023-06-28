@@ -128,6 +128,8 @@ private:
 	std::vector<VkSemaphore> renderFinishedSemaphores;
 	std::vector<VkFence> inFlightFences;
 
+    bool framebufferResized = false;
+
     uint32_t currentFrame = 0;
     
 private:
@@ -203,10 +205,20 @@ private:
     void createSyncObjects();
     void destroySyncObjects();
 
+    // Recreate swap chain
+    void recreateSwapChain();
+    void cleanupSwapChain();
+
     // utils
     QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
     bool isDeviceSuitable(VkPhysicalDevice device);
     bool checkDeviceExtensionSupport(VkPhysicalDevice device);
+
+    static void framebufferResizeCallback(GLFWwindow* window, int width, int height)
+	{
+        auto app = reinterpret_cast<HelloTriangleApplication*>(glfwGetWindowUserPointer(window));
+		app->framebufferResized = true;
+	}
 };
 
 
