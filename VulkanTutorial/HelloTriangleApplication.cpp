@@ -436,8 +436,8 @@ void HelloTriangleApplication::destroyImageViews()
 void HelloTriangleApplication::createGraphicsPipeline()
 {
 	// Shader
-	auto vertShaderCode = TutUtils::readFile("VulkanTutorial/vert.spv");
-	auto fragShaderCode = TutUtils::readFile("VulkanTutorial/frag.spv");
+	auto vertShaderCode = TutUtils::readFile("VulkanTutorial/shader/vert.spv");
+	auto fragShaderCode = TutUtils::readFile("VulkanTutorial/shader/frag.spv");
 
 	VkShaderModule vertShaderModule = createShaderModule(vertShaderCode);
 	VkShaderModule fragShaderModule = createShaderModule(fragShaderCode);
