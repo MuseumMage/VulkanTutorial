@@ -173,6 +173,10 @@ private:
 	std::vector<VkSemaphore> renderFinishedSemaphores;
 	std::vector<VkFence> inFlightFences;
 
+	// Vertex buffer
+	VkBuffer vertexBuffer;
+	VkDeviceMemory vertexBufferMemory;
+
 	// Member variables
 	bool framebufferResized = false;
 	uint32_t currentFrame = 0;
@@ -180,9 +184,9 @@ private:
 	// Vertex
 	const std::vector<Vertex> vertices =
 	{
-		{{0.0f, -0.5f}, {1.0f, 0.0f, 0.0f}},
-		{{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
-		{{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}
+		{{0.0f, -0.5f}, {1.0f, 1.0f, 1.0f}},
+	    {{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
+	    {{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}
 	};
 
 private:
@@ -262,16 +266,22 @@ private:
 	void recreateSwapChain();
 	void cleanupSwapChain();
 
+	// Create buffer
+	void createVertexBuffer();
+	void destroyVertexBuffer();
+
 	// utils
 	QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
 	bool isDeviceSuitable(VkPhysicalDevice device);
 	bool checkDeviceExtensionSupport(VkPhysicalDevice device);
+	uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 
 	static void framebufferResizeCallback(GLFWwindow* window, int width, int height)
 	{
 		auto app = reinterpret_cast<HelloTriangleApplication*>(glfwGetWindowUserPointer(window));
 		app->framebufferResized = true;
 	}
+
 };
 
 

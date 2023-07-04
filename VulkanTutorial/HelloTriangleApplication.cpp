@@ -39,6 +39,7 @@ void HelloTriangleApplication::initVulkan()
 	createGraphicsPipeline();
 	createFramebuffers();
 	createCommandPool();
+	createVertexBuffer();
 	createCommandBuffers();
 	createSyncObjects();
 }
@@ -61,7 +62,8 @@ void HelloTriangleApplication::cleanup()
 	}
 	destroySyncObjects();
 	destroyCommandPool();
-	destroyFramebuffers();
+	cleanupSwapChain();
+	destroyVertexBuffer();
 	destroyGraphicsPipeline();
 	destroyRenderPass();
 	destroySwapChain();
@@ -798,7 +800,16 @@ void HelloTriangleApplication::recordCommandBuffer(VkCommandBuffer commandBuffer
 	// instanceCount: Used for instanced rendering, use 1 if you're not doing that.
 	// firstVertex: Used as an offset into the vertex buffer, defines the lowest value of gl_VertexIndex.
 	// firstInstance: Used as an offset for instanced rendering, defines the lowest value of gl_InstanceIndex.
-	vkCmdDraw(commandBuffer, 3, 1, 0, 0);
+	// vkCmdDraw(commandBuffer, 3, 1, 0, 0);
+
+	VkBuffer vertexBuffers[] = {vertexBuffer};
+	VkDeviceSize offsets[] = {0};
+	// The vkCmdBindVertexBuffers function is used to bind vertex buffers to bindings
+	// The first two parameters, besides the command buffer, specify the offset and number of bindings we're going to specify vertex buffers for
+	// The last two parameters specify the array of vertex buffers to bind and the byte offsets to start reading vertex data from
+	vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
+
+	vkCmdDraw(commandBuffer, static_cast<uint32_t>(vertices.size()), 1, 0, 0);
 
 	vkCmdEndRenderPass(commandBuffer);
 	if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS)
@@ -943,7 +954,52 @@ void HelloTriangleApplication::cleanupSwapChain()
 {
 	destroyFramebuffers();
 	destroyImageViews();
-	vkDestroySwapchainKHR(device, swapChain, nullptr);
+	destroySwapChain();
+}
+
+void HelloTriangleApplication::createVertexBuffer()
+{
+	VkBufferCreateInfo bufferInfo{};
+	bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+	bufferInfo.size = sizeof(vertices[0]) * vertices.size();
+	bufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+	bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+	if (vkCreateBuffer(device, &bufferInfo, nullptr, &vertexBuffer) != VK_SUCCESS)
+	{
+		throw std::runtime_error("failed to create vertex buffer!");
+	}
+
+	VkMemoryRequirements memRequirements;
+	vkGetBufferMemoryRequirements(device, vertexBuffer, &memRequirements);
+	VkMemoryAllocateInfo allocInfo{};
+	allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+	allocInfo.allocationSize = memRequirements.size;
+	allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, 
+		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+
+	if (vkAllocateMemory(device, &allocInfo, nullptr, &vertexBufferMemory) != VK_SUCCESS)
+	{
+		throw std::runtime_error("failed to allocate vertex buffer memory!");
+	}
+
+	vkBindBufferMemory(device, vertexBuffer, vertexBufferMemory, 0);
+
+	void* data;
+	// The offset and size here are 0 and bufferInfo.size(first 0)
+	// The second to last parameter can be used to specify flags,
+	// but there aren't any available yet in the current API. It must be set to the value 0
+	vkMapMemory(device, vertexBufferMemory, 0, bufferInfo.size, 0, &data);
+	memcpy(data, vertices.data(), (size_t) bufferInfo.size);
+	vkUnmapMemory(device, vertexBufferMemory);
+
+
+}
+
+void HelloTriangleApplication::destroyVertexBuffer()
+{
+	vkDestroyBuffer(device, vertexBuffer, nullptr);
+	vkFreeMemory(device, vertexBufferMemory, nullptr);
 }
 
 VkResult HelloTriangleApplication::CreateDebugUtilsMessengerEXT(VkInstance instance,
@@ -1013,6 +1069,22 @@ bool HelloTriangleApplication::checkDeviceExtensionSupport(VkPhysicalDevice devi
 	}
 
 	return requiredExtensions.empty();
+}
+
+uint32_t HelloTriangleApplication::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties)
+{
+	VkPhysicalDeviceMemoryProperties memProperties;
+	vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProperties);
+
+	for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++)
+	{
+		if ((typeFilter & (1 << i)) &&
+			(memProperties.memoryTypes[i].propertyFlags & properties) == properties)
+		{
+			return i;
+		}
+	}
+	throw std::runtime_error("failed to find suitable memory type!");
 }
 
 QueueFamilyIndices HelloTriangleApplication::findQueueFamilies(VkPhysicalDevice device)
