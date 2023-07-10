@@ -56,8 +56,9 @@ struct Vertex
 	}
 
 	// Attribute descriptions
-	static std::array<VkVertexInputAttributeDescription, 2> getAttributeDescriptions() {
-	    std::array<VkVertexInputAttributeDescription, 2> attributeDescriptions{};
+	static std::array<VkVertexInputAttributeDescription, 2> getAttributeDescriptions()
+	{
+		std::array<VkVertexInputAttributeDescription, 2> attributeDescriptions{};
 
 		// pos
 		attributeDescriptions[0].binding = 0;
@@ -78,7 +79,7 @@ struct Vertex
 		attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
 		attributeDescriptions[1].offset = offsetof(Vertex, color);
 
-	    return attributeDescriptions;
+		return attributeDescriptions;
 	}
 };
 
@@ -86,7 +87,9 @@ struct QueueFamilyIndices
 {
 	std::optional<uint32_t> graphicsFamily;
 	std::optional<uint32_t> presentFamily;
-	bool isComplete() {
+
+	bool isComplete()
+	{
 		return graphicsFamily.has_value() && presentFamily.has_value();
 	}
 };
@@ -98,7 +101,8 @@ struct SwapChainSupportDetails
 	std::vector<VkPresentModeKHR> presentModes;
 };
 
-class HelloTriangleApplication {
+class HelloTriangleApplication
+{
 public:
 	void run()
 	{
@@ -185,8 +189,8 @@ private:
 	const std::vector<Vertex> vertices =
 	{
 		{{0.0f, -0.5f}, {1.0f, 1.0f, 1.0f}},
-	    {{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
-	    {{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}
+		{{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
+		{{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}
 	};
 
 private:
@@ -201,8 +205,11 @@ private:
 
 	// debug msg
 	void setupDebugMessenger();
-	VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger);
-	void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks* pAllocator);
+	VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo,
+	                                      const VkAllocationCallbacks* pAllocator,
+	                                      VkDebugUtilsMessengerEXT* pDebugMessenger);
+	void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger,
+	                                   const VkAllocationCallbacks* pAllocator);
 	void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo);
 
 	static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
@@ -231,7 +238,7 @@ private:
 	void destroySwapChain();
 	SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device);
 	VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
-	VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR> availablePresentModes);
+	VkPresentModeKHR chooseSwapPresentMode(std::vector<VkPresentModeKHR> availablePresentModes);
 	VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
 
 	// ImageView
@@ -266,22 +273,27 @@ private:
 	void recreateSwapChain();
 	void cleanupSwapChain();
 
-	// Create buffer
+	// Create vertex buffer
 	void createVertexBuffer();
 	void destroyVertexBuffer();
+
+	// Create buffer
+
 
 	// utils
 	QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
 	bool isDeviceSuitable(VkPhysicalDevice device);
 	bool checkDeviceExtensionSupport(VkPhysicalDevice device);
 	uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
+	void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer,
+	                  VkDeviceMemory& bufferMemory);
+	void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 
 	static void framebufferResizeCallback(GLFWwindow* window, int width, int height)
 	{
 		auto app = reinterpret_cast<HelloTriangleApplication*>(glfwGetWindowUserPointer(window));
 		app->framebufferResized = true;
 	}
-
 };
 
 
