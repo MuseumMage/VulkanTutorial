@@ -159,6 +159,7 @@ private:
 	std::vector<VkImageView> swapChainImageViews;
 
 	// Graphics pipeline
+	VkDescriptorSetLayout descriptorSetLayout;
 	VkPipelineLayout pipelineLayout;
 	VkPipeline graphicsPipeline;
 
@@ -185,6 +186,10 @@ private:
 	VkBuffer indexBuffer;
 	VkDeviceMemory indexBufferMemory;
 
+	std::vector<VkBuffer> uniformBuffers;
+	std::vector<VkDeviceMemory> uniformBuffersMemory;
+	std::vector<void*> uniformBuffersMapped;
+
 	// Member variables
 	bool framebufferResized = false;
 	uint32_t currentFrame = 0;
@@ -202,6 +207,14 @@ private:
 	const std::vector<uint16_t> indices = 
 	{
 		0, 1, 2, 2, 3, 0
+	};
+
+	// Uniform buffer
+	struct UniformBufferObject
+	{
+	    glm::mat4 model;
+	    glm::mat4 view;
+	    glm::mat4 proj;
 	};
 
 private:
@@ -291,6 +304,13 @@ private:
 	// Create index buffer
 	void createIndexBuffer();
 	void destroyIndexBuffer();
+
+	// Uniform buffer
+	void createDescriptorSetLayout();
+	void destroyDescriptorSetLayout();
+	void createUniformBuffers();
+	void destroyUniformBuffers();
+	void updateUniformBuffer(uint32_t currentImage);
 
 	// utils
 	QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
