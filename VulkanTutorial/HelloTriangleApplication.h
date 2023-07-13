@@ -190,6 +190,10 @@ private:
 	std::vector<VkDeviceMemory> uniformBuffersMemory;
 	std::vector<void*> uniformBuffersMapped;
 
+	// Descriptor pool
+	VkDescriptorPool descriptorPool;
+	std::vector<VkDescriptorSet> descriptorSets;
+
 	// Member variables
 	bool framebufferResized = false;
 	uint32_t currentFrame = 0;
@@ -311,6 +315,11 @@ private:
 	void createUniformBuffers();
 	void destroyUniformBuffers();
 	void updateUniformBuffer(uint32_t currentImage);
+
+	// Descriptor pool
+	void createDescriptorPool();
+	void createDescriptorSets();
+	void destroyDescriptorPool();
 
 	// utils
 	QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
