@@ -16,6 +16,8 @@
 #include <optional>
 #include <vector>
 #include <array>
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
 
 // Vulkan Tutorial
 // Setup
