@@ -44,6 +44,7 @@ void HelloTriangleApplication::initVulkan()
 	createGraphicsPipeline();
 	createFramebuffers();
 	createCommandPool();
+	createTextureImage();
 	createVertexBuffer();
 	createIndexBuffer();
 	createUniformBuffers();
@@ -824,10 +825,11 @@ void HelloTriangleApplication::recordCommandBuffer(VkCommandBuffer commandBuffer
 	vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT16);
 
 	// Uniform buffers(descriptor sets)
-	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
+	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1,
+	                        &descriptorSets[currentFrame], 0, nullptr);
 
 	// vkCmdDraw(commandBuffer, vertices.size(), 1, 0, 0);
-	vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
+	vkCmdDrawIndexed(commandBuffer, indices.size(), 1, 0, 0, 0);
 
 	vkCmdEndRenderPass(commandBuffer);
 	if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS)
@@ -1047,10 +1049,10 @@ void HelloTriangleApplication::destroyIndexBuffer()
 
 void HelloTriangleApplication::createDescriptorSetLayout()
 {
-    VkDescriptorSetLayoutBinding uboLayoutBinding{};
-    uboLayoutBinding.binding = 0;
-    uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    uboLayoutBinding.descriptorCount = 1; // Number of values in the array
+	VkDescriptorSetLayoutBinding uboLayoutBinding{};
+	uboLayoutBinding.binding = 0;
+	uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	uboLayoutBinding.descriptorCount = 1; // Number of values in the array
 	uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT; // The shader stage that will access this binding
 	uboLayoutBinding.pImmutableSamplers = nullptr; // Optional
 
@@ -1074,40 +1076,43 @@ void HelloTriangleApplication::createUniformBuffers()
 {
 	VkDeviceSize bufferSize = sizeof(UniformBufferObject);
 
-    uniformBuffers.resize(MAX_FRAMES_IN_FLIGHT);
-    uniformBuffersMemory.resize(MAX_FRAMES_IN_FLIGHT);
-    uniformBuffersMapped.resize(MAX_FRAMES_IN_FLIGHT);
+	uniformBuffers.resize(MAX_FRAMES_IN_FLIGHT);
+	uniformBuffersMemory.resize(MAX_FRAMES_IN_FLIGHT);
+	uniformBuffersMapped.resize(MAX_FRAMES_IN_FLIGHT);
 
-    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
 	{
-        createBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, uniformBuffers[i], uniformBuffersMemory[i]);
+		createBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+		             VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, uniformBuffers[i],
+		             uniformBuffersMemory[i]);
 
-        vkMapMemory(device, uniformBuffersMemory[i], 0, bufferSize, 0, &uniformBuffersMapped[i]);
-    }
+		vkMapMemory(device, uniformBuffersMemory[i], 0, bufferSize, 0, &uniformBuffersMapped[i]);
+	}
 }
 
 void HelloTriangleApplication::destroyUniformBuffers()
 {
 	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
 	{
-        vkDestroyBuffer(device, uniformBuffers[i], nullptr);
-        vkFreeMemory(device, uniformBuffersMemory[i], nullptr);
-    }
+		vkDestroyBuffer(device, uniformBuffers[i], nullptr);
+		vkFreeMemory(device, uniformBuffersMemory[i], nullptr);
+	}
 }
 
 void HelloTriangleApplication::updateUniformBuffer(uint32_t currentImage)
 {
 	static auto startTime = std::chrono::high_resolution_clock::now();
 
-    auto currentTime = std::chrono::high_resolution_clock::now();
-    float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
+	auto currentTime = std::chrono::high_resolution_clock::now();
+	float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
 
 	UniformBufferObject ubo{};
-	ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+	ubo.model = rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 	// eye, center, up positions respectively
-	ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-	ubo.proj = glm::perspective(glm::radians(45.0f), swapChainExtent.width / (float) swapChainExtent.height, 0.1f, 10.0f);
-	ubo.proj[1][1] *= -1;	// Invert Y coordinate
+	ubo.view = lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+	ubo.proj = glm::perspective(glm::radians(45.0f), swapChainExtent.width / static_cast<float>(swapChainExtent.height),
+	                            0.1f, 10.0f);
+	ubo.proj[1][1] *= -1; // Invert Y coordinate
 
 	memcpy(uniformBuffersMapped[currentImage], &ubo, sizeof(ubo));
 }
@@ -1142,15 +1147,15 @@ void HelloTriangleApplication::createDescriptorSets()
 	descriptorSets.resize(MAX_FRAMES_IN_FLIGHT);
 	if (vkAllocateDescriptorSets(device, &allocInfo, descriptorSets.data()) != VK_SUCCESS)
 	{
-	    throw std::runtime_error("failed to allocate descriptor sets!");
+		throw std::runtime_error("failed to allocate descriptor sets!");
 	}
 
 	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
 	{
 		VkDescriptorBufferInfo bufferInfo{};
-	    bufferInfo.buffer = uniformBuffers[i];
-	    bufferInfo.offset = 0;
-	    bufferInfo.range = sizeof(UniformBufferObject);
+		bufferInfo.buffer = uniformBuffers[i];
+		bufferInfo.offset = 0;
+		bufferInfo.range = sizeof(UniformBufferObject);
 
 		VkWriteDescriptorSet descriptorWrite{};
 		descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -1172,6 +1177,84 @@ void HelloTriangleApplication::createDescriptorSets()
 void HelloTriangleApplication::destroyDescriptorPool()
 {
 	vkDestroyDescriptorPool(device, descriptorPool, nullptr);
+}
+
+void HelloTriangleApplication::createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling,
+                                           VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image,
+                                           VkDeviceMemory& imageMemory)
+{
+	// One dimensional images can be used to store an array of data or gradient,
+	// two dimensional images are mainly used for textures,
+	// and three dimensional images can be used to store voxel volumes, for example.
+	VkImageCreateInfo imageInfo{};
+	imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+	imageInfo.imageType = VK_IMAGE_TYPE_2D;
+	imageInfo.extent.width = width;
+	imageInfo.extent.height = height;
+	imageInfo.extent.depth = 1;
+	imageInfo.mipLevels = 1;
+	imageInfo.arrayLayers = 1;
+	imageInfo.format = format; // format of texels
+	// VK_IMAGE_TILING_LINEAR: Texels are laid out in row-major order like our pixels array
+	// VK_IMAGE_TILING_OPTIMAL: Texels are laid out in an implementation defined order for optimal access
+	imageInfo.tiling = tiling; // layout of pixels
+	// VK_IMAGE_LAYOUT_UNDEFINED: Not usable by the GPU and the very first transition will discard the texels.
+	// VK_IMAGE_LAYOUT_PREINITIALIZED: Not usable by the GPU, but the first transition will preserve the texels.
+	imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	imageInfo.usage = usage;
+	imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+	imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+	if (vkCreateImage(device, &imageInfo, nullptr, &textureImage) != VK_SUCCESS)
+	{
+		throw std::runtime_error("failed to create image!");
+	}
+
+	// allocate memory for image
+	VkMemoryRequirements memRequirements;
+	vkGetImageMemoryRequirements(device, image, &memRequirements);
+
+	VkMemoryAllocateInfo allocInfo{};
+	allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+	allocInfo.allocationSize = memRequirements.size;
+	allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties);
+
+	if (vkAllocateMemory(device, &allocInfo, nullptr, &imageMemory) != VK_SUCCESS)
+	{
+		throw std::runtime_error("failed to allocate image memory!");
+	}
+
+	vkBindImageMemory(device, image, imageMemory, 0);
+}
+
+void HelloTriangleApplication::createTextureImage()
+{
+	int texWidth, texHeight, texChannels;
+	stbi_uc* pixels = stbi_load("image/statue.jpg", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+	VkDeviceSize imageSize = texWidth * texHeight * 4;
+
+	if (!pixels)
+	{
+		throw std::runtime_error("failed to load texture image!");
+	}
+
+	// host visible memory
+	createBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+	             VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer,
+	             stagingBufferMemory);
+
+	// copy pixel values to buffer
+	void* data;
+	vkMapMemory(device, stagingBufferMemory, 0, imageSize, 0, &data);
+	memcpy(data, pixels, imageSize);
+	vkUnmapMemory(device, stagingBufferMemory);
+
+	stbi_image_free(pixels);
+
+	// create vkimage
+	createImage(texWidth, texHeight, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL,
+	            VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+	            textureImage, textureImageMemory);
 }
 
 void HelloTriangleApplication::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage,
@@ -1207,7 +1290,17 @@ void HelloTriangleApplication::createBuffer(VkDeviceSize size, VkBufferUsageFlag
 
 void HelloTriangleApplication::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)
 {
-	// allocate command buffer
+	VkCommandBuffer commandBuffer = beginSingleTimeCommands();
+
+	VkBufferCopy copyRegion{};
+	copyRegion.size = size;
+	vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
+
+	endSingleTimeCommands(commandBuffer);
+}
+
+VkCommandBuffer HelloTriangleApplication::beginSingleTimeCommands()
+{
 	VkCommandBufferAllocateInfo allocInfo{};
 	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
 	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
@@ -1217,22 +1310,19 @@ void HelloTriangleApplication::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer
 	VkCommandBuffer commandBuffer;
 	vkAllocateCommandBuffers(device, &allocInfo, &commandBuffer);
 
-	// record command buffer
 	VkCommandBufferBeginInfo beginInfo{};
 	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
 	vkBeginCommandBuffer(commandBuffer, &beginInfo);
 
-	VkBufferCopy copyRegion{};
-	copyRegion.srcOffset = 0; // Optional
-	copyRegion.dstOffset = 0; // Optional
-	copyRegion.size = size;
-	vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
+	return commandBuffer;
+}
 
+void HelloTriangleApplication::endSingleTimeCommands(VkCommandBuffer& commandBuffer)
+{
 	vkEndCommandBuffer(commandBuffer);
 
-	// submit command buffer to the queue and execute it
 	VkSubmitInfo submitInfo{};
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 	submitInfo.commandBufferCount = 1;
@@ -1242,6 +1332,42 @@ void HelloTriangleApplication::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer
 	vkQueueWaitIdle(graphicsQueue);
 
 	vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
+}
+
+void HelloTriangleApplication::transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout,
+                                                     VkImageLayout newLayout)
+{
+	VkCommandBuffer commandBuffer = beginSingleTimeCommands();
+
+	// image memory barrier
+	VkImageMemoryBarrier barrier{};
+	barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+	barrier.oldLayout = oldLayout;
+	barrier.newLayout = newLayout;
+
+	barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+	barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+
+	barrier.image = image;
+	barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	barrier.subresourceRange.baseMipLevel = 0;
+	barrier.subresourceRange.levelCount = 1;
+	barrier.subresourceRange.baseArrayLayer = 0;
+	barrier.subresourceRange.layerCount = 1;
+
+	barrier.srcAccessMask = 0; // TODO
+	barrier.dstAccessMask = 0; // TODO
+
+	vkCmdPipelineBarrier(
+	    commandBuffer,
+	    0 /* TODO */, 0 /* TODO */,
+	    0,
+	    0, nullptr,
+	    0, nullptr,
+	    1, &barrier
+	);
+
+	endSingleTimeCommands(commandBuffer);
 }
 
 VkResult HelloTriangleApplication::CreateDebugUtilsMessengerEXT(VkInstance instance,

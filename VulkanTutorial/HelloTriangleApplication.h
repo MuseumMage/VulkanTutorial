@@ -200,6 +200,12 @@ private:
 	bool framebufferResized = false;
 	uint32_t currentFrame = 0;
 
+	// Images
+	VkBuffer stagingBuffer;
+	VkDeviceMemory stagingBufferMemory;
+	VkImage textureImage;
+	VkDeviceMemory textureImageMemory;
+
 	// Vertex
 	const std::vector<Vertex> vertices = 
 	{
@@ -322,6 +328,10 @@ private:
 	void createDescriptorPool();
 	void createDescriptorSets();
 	void destroyDescriptorPool();
+	void createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
+
+	// Images
+	void createTextureImage();
 
 	// utils
 	QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
@@ -331,6 +341,9 @@ private:
 	void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer,
 	                  VkDeviceMemory& bufferMemory);
 	void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
+	VkCommandBuffer beginSingleTimeCommands();
+	void endSingleTimeCommands(VkCommandBuffer& commandBuffer);
+	void transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout);
 
 	static void framebufferResizeCallback(GLFWwindow* window, int width, int height)
 	{
