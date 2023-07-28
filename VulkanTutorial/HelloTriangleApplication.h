@@ -5,19 +5,28 @@
 //  Created by 张博 on 2023/5/25.
 //
 
+#pragma once
+
 #ifndef HelloTriangleApplication_h
 #define HelloTriangleApplication_h
 
-#include <vulkan/vulkan.h>
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
+
+#define GLM_FORCE_RADIANS
 #include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
+
 #include <iostream>
 #include <optional>
 #include <vector>
 #include <array>
-#define STB_IMAGE_IMPLEMENTATION
-#include <stb_image.h>
+
+
+//#include <vulkan/vulkan.h>
 
 // Vulkan Tutorial
 // Setup
@@ -206,6 +215,10 @@ private:
 	VkImage textureImage;
 	VkDeviceMemory textureImageMemory;
 
+	// Image view and Sampler
+	VkImageView textureImageView;
+	VkSampler textureSampler;
+
 	// Vertex
 	const std::vector<Vertex> vertices = 
 	{
@@ -332,6 +345,13 @@ private:
 
 	// Images
 	void createTextureImage();
+	void destroyTextureImage();
+
+	// Image view and Sampler
+	void createTextureImageView();
+	void destroyTextureImageView();
+	void createTextureSampler();
+	void destroyTextureSampler();
 
 	// utils
 	QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
@@ -345,6 +365,7 @@ private:
 	void endSingleTimeCommands(VkCommandBuffer& commandBuffer);
 	void transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout);
 	void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
+	VkImageView createImageView(VkImage image, VkFormat format);
 
 	static void framebufferResizeCallback(GLFWwindow* window, int width, int height)
 	{
