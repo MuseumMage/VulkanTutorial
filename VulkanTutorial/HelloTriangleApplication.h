@@ -50,7 +50,7 @@
 
 struct Vertex
 {
-	glm::vec2 pos;
+	glm::vec3 pos;
 	glm::vec3 color;
 	glm::vec2 texCoord;
 
@@ -80,7 +80,7 @@ struct Vertex
 		// ivec2: VK_FORMAT_R32G32_SINT, a 2-component vector of 32-bit signed integers
 		// uvec4: VK_FORMAT_R32G32B32A32_UINT, a 4-component vector of 32-bit unsigned integers
 		// double: VK_FORMAT_R64_SFLOAT, a double-precision (64-bit) float
-		attributeDescriptions[0].format = VK_FORMAT_R32G32_SFLOAT;
+		attributeDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT;
 		attributeDescriptions[0].offset = offsetof(Vertex, pos);
 
 		// color
@@ -91,9 +91,9 @@ struct Vertex
 
 		// texCoord
 		attributeDescriptions[2].binding = 0;
-        attributeDescriptions[2].location = 2;
-        attributeDescriptions[2].format = VK_FORMAT_R32G32_SFLOAT;
-        attributeDescriptions[2].offset = offsetof(Vertex, texCoord);
+		attributeDescriptions[2].location = 2;
+		attributeDescriptions[2].format = VK_FORMAT_R32G32_SFLOAT;
+		attributeDescriptions[2].offset = offsetof(Vertex, texCoord);
 
 		return attributeDescriptions;
 	}
@@ -224,27 +224,38 @@ private:
 	VkImageView textureImageView;
 	VkSampler textureSampler;
 
+	// Depth
+	VkImage depthImage;
+	VkDeviceMemory depthImageMemory;
+	VkImageView depthImageView;
+
 	// Vertex
-	const std::vector<Vertex> vertices = 
+	const std::vector<Vertex> vertices =
 	{
-	    {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},
-	    {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},
-	    {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},
-	    {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}}
+		{{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
+		{{0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
+		{{0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
+		{{-0.5f, 0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}},
+
+		{{-0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
+		{{0.5f, -0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
+		{{0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
+		{{-0.5f, 0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}}
 	};
 
 	// index
-	const std::vector<uint16_t> indices = 
+	const std::vector<uint16_t> indices =
 	{
-		0, 1, 2, 2, 3, 0
+		0, 1, 2, 2, 3, 0,
+		4, 5, 6, 6, 7, 4
 	};
 
 	// Uniform buffer
 	struct UniformBufferObject
 	{
-	    glm::mat4 model;
-	    glm::mat4 view;
-	    glm::mat4 proj;
+		glm::mat4 model;
+		glm::mat4 view;
+		glm::mat4 proj;
 	};
 
 private:
@@ -346,7 +357,8 @@ private:
 	void createDescriptorPool();
 	void createDescriptorSets();
 	void destroyDescriptorPool();
-	void createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
+	void createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage,
+	                 VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
 
 	// Images
 	void createTextureImage();
@@ -357,6 +369,10 @@ private:
 	void destroyTextureImageView();
 	void createTextureSampler();
 	void destroyTextureSampler();
+
+	// Depth
+	void createDepthResources();
+	void destroyDepthResources();
 
 	// utils
 	QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
@@ -370,12 +386,27 @@ private:
 	void endSingleTimeCommands(VkCommandBuffer& commandBuffer);
 	void transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout);
 	void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
-	VkImageView createImageView(VkImage image, VkFormat format);
+	VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags);
+	VkFormat findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling,
+	                             VkFormatFeatureFlags features);
 
 	static void framebufferResizeCallback(GLFWwindow* window, int width, int height)
 	{
 		auto app = reinterpret_cast<HelloTriangleApplication*>(glfwGetWindowUserPointer(window));
 		app->framebufferResized = true;
+	}
+
+	VkFormat findDepthFormat()
+	{
+		return findSupportedFormat(
+			{VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT},
+			VK_IMAGE_TILING_OPTIMAL,
+			VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT
+		);
+	}
+	static bool hasStencilComponent(VkFormat format)
+	{
+	    return format == VK_FORMAT_D32_SFLOAT_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT;
 	}
 };
 
