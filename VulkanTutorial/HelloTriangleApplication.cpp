@@ -17,6 +17,9 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
+#define TINYOBJLOADER_IMPLEMENTATION
+#include <tiny_obj_loader.h>
+
 void HelloTriangleApplication::initWindow()
 {
 	glfwInit();
@@ -50,6 +53,8 @@ void HelloTriangleApplication::initVulkan()
 	createTextureImageView();
 	createTextureSampler();
 
+	// 3d model
+	loadModel();
 	createVertexBuffer();
 	createIndexBuffer();
 	createUniformBuffers();
@@ -439,8 +444,8 @@ void HelloTriangleApplication::destroyImageViews()
 void HelloTriangleApplication::createGraphicsPipeline()
 {
 	// Shader
-	auto vertShaderCode = TutUtils::readFile("VulkanTutorial/shader/vert.spv");
-	auto fragShaderCode = TutUtils::readFile("VulkanTutorial/shader/frag.spv");
+	auto vertShaderCode = TutUtils::readFile(VERTEX_SHADER_PATH);
+	auto fragShaderCode = TutUtils::readFile(FRAG_SHADER_PATH);
 
 	VkShaderModule vertShaderModule = createShaderModule(vertShaderCode);
 	VkShaderModule fragShaderModule = createShaderModule(fragShaderCode);
@@ -844,7 +849,7 @@ void HelloTriangleApplication::recordCommandBuffer(VkCommandBuffer commandBuffer
 	// The first two parameters, besides the command buffer, specify the offset and number of bindings we're going to specify vertex buffers for
 	// The last two parameters specify the array of vertex buffers to bind and the byte offsets to start reading vertex data from
 	vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
-	vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT16);
+	vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT32);
 
 	// Uniform buffers(descriptor sets)
 	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1,
@@ -1276,7 +1281,7 @@ void HelloTriangleApplication::createImage(uint32_t width, uint32_t height, VkFo
 void HelloTriangleApplication::createTextureImage()
 {
 	int texWidth, texHeight, texChannels;
-	stbi_uc* pixels = stbi_load("VulkanTutorial/image/statue.jpg", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+	stbi_uc* pixels = stbi_load(TEXTURE_PATH.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
 	VkDeviceSize imageSize = texWidth * texHeight * 4;
 
 	if (!pixels)
@@ -1386,6 +1391,48 @@ void HelloTriangleApplication::destroyDepthResources()
 	vkDestroyImageView(device, depthImageView, nullptr);
 	vkDestroyImage(device, depthImage, nullptr);
 	vkFreeMemory(device, depthImageMemory, nullptr);
+}
+
+void HelloTriangleApplication::loadModel()
+{
+	tinyobj::attrib_t attrib;
+	std::vector<tinyobj::shape_t> shapes;
+	std::vector<tinyobj::material_t> materials;
+	std::string warn, err;
+
+	if (!LoadObj(&attrib, &shapes, &materials, &warn, &err, MODEL_PATH.c_str()))
+	{
+		throw std::runtime_error(warn + err);
+	}
+
+	for (const auto& shape : shapes)
+	{
+		for (const auto& index : shape.mesh.indices)
+		{
+			Vertex vertex{};
+			vertex.pos = {
+				attrib.vertices[3 * index.vertex_index + 0],
+				attrib.vertices[3 * index.vertex_index + 1],
+				attrib.vertices[3 * index.vertex_index + 2]
+			};
+
+			vertex.texCoord = {
+				attrib.texcoords[2 * index.texcoord_index + 0],
+				1.0f - attrib.texcoords[2 * index.texcoord_index + 1]
+			};
+
+			vertex.color = {1.0f, 1.0f, 1.0f};
+			vertices.push_back(vertex);
+
+			if (!uniqueVertices.contains(vertex))
+			{
+				uniqueVertices[vertex] = static_cast<uint32_t>(vertices.size());
+				vertices.push_back(vertex);
+			}
+
+			indices.push_back(uniqueVertices[vertex]);
+		}
+	}
 }
 
 void HelloTriangleApplication::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage,

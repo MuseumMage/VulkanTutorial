@@ -18,10 +18,14 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/hash.hpp>
+
 #include <iostream>
 #include <optional>
 #include <vector>
 #include <array>
+#include <unordered_map>
 
 
 //#include <vulkan/vulkan.h>
@@ -97,7 +101,20 @@ struct Vertex
 
 		return attributeDescriptions;
 	}
+
+	bool operator==(const Vertex& other) const
+	{
+		return pos == other.pos && color == other.color && texCoord == other.texCoord;
+	}
 };
+
+namespace std {
+    template<> struct hash<Vertex> {
+        size_t operator()(Vertex const& vertex) const {
+            return ((hash<glm::vec3>()(vertex.pos) ^ (hash<glm::vec3>()(vertex.color) << 1)) >> 1) ^ (hash<glm::vec2>()(vertex.texCoord) << 1);
+        }
+    };
+}
 
 struct QueueFamilyIndices
 {
@@ -134,6 +151,15 @@ private:
 
 	const uint32_t WIDTH = 800;
 	const uint32_t HEIGHT = 600;
+
+	// 3d model
+	const std::string MODEL_PATH = "VulkanTutorial/content/viking_room.obj";
+	const std::string TEXTURE_PATH = "VulkanTutorial/content/viking_room.png";
+	const std::string STATUE_TEXTURE_PATH = "VulkanTutorial/image/statue.jpg";
+
+	// shader
+	const std::string VERTEX_SHADER_PATH = "VulkanTutorial/shader/vert.spv";
+	const std::string FRAG_SHADER_PATH = "VulkanTutorial/shader/frag.spv";
 
 	// inflight frames
 	const int MAX_FRAMES_IN_FLIGHT = 2;
@@ -230,7 +256,7 @@ private:
 	VkImageView depthImageView;
 
 	// Vertex
-	const std::vector<Vertex> vertices =
+	const std::vector<Vertex> vertices_triangle =
 	{
 		{{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
 		{{0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
@@ -244,11 +270,16 @@ private:
 	};
 
 	// index
-	const std::vector<uint16_t> indices =
+	const std::vector<uint16_t> indices_triangle =
 	{
 		0, 1, 2, 2, 3, 0,
 		4, 5, 6, 6, 7, 4
 	};
+
+	// 3d model
+	std::vector<Vertex> vertices;
+	std::vector<uint32_t> indices;
+	std::unordered_map<Vertex, uint32_t> uniqueVertices{};
 
 	// Uniform buffer
 	struct UniformBufferObject
@@ -374,6 +405,9 @@ private:
 	void createDepthResources();
 	void destroyDepthResources();
 
+	// loading models
+	void loadModel();
+
 	// utils
 	QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
 	bool isDeviceSuitable(VkPhysicalDevice device);
@@ -404,9 +438,10 @@ private:
 			VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT
 		);
 	}
+
 	static bool hasStencilComponent(VkFormat format)
 	{
-	    return format == VK_FORMAT_D32_SFLOAT_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT;
+		return format == VK_FORMAT_D32_SFLOAT_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT;
 	}
 };
 
