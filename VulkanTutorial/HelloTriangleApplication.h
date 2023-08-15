@@ -108,12 +108,17 @@ struct Vertex
 	}
 };
 
-namespace std {
-    template<> struct hash<Vertex> {
-        size_t operator()(Vertex const& vertex) const {
-            return ((hash<glm::vec3>()(vertex.pos) ^ (hash<glm::vec3>()(vertex.color) << 1)) >> 1) ^ (hash<glm::vec2>()(vertex.texCoord) << 1);
-        }
-    };
+namespace std
+{
+	template <>
+	struct hash<Vertex>
+	{
+		size_t operator()(const Vertex& vertex) const
+		{
+			return ((hash<glm::vec3>()(vertex.pos) ^ (hash<glm::vec3>()(vertex.color) << 1)) >> 1) ^ (hash<glm::vec2>()(
+				vertex.texCoord) << 1);
+		}
+	};
 }
 
 struct QueueFamilyIndices
@@ -256,6 +261,12 @@ private:
 	VkDeviceMemory depthImageMemory;
 	VkImageView depthImageView;
 
+	// MSAA
+	VkSampleCountFlagBits msaaSamples = VK_SAMPLE_COUNT_1_BIT;
+	VkImage colorImage;
+	VkDeviceMemory colorImageMemory;
+	VkImageView colorImageView;
+
 	// Vertex
 	const std::vector<Vertex> vertices_triangle =
 	{
@@ -389,8 +400,9 @@ private:
 	void createDescriptorPool();
 	void createDescriptorSets();
 	void destroyDescriptorPool();
-	void createImage(uint32_t width, uint32_t height, uint32_t mipLevels, VkFormat format, VkImageTiling tiling,
-	                 VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
+	void createImage(uint32_t width, uint32_t height, uint32_t mipLevels, VkSampleCountFlagBits numSamples, VkFormat format,
+	                 VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties,
+	                 VkImage& image, VkDeviceMemory& imageMemory);
 
 	// Images
 	void createTextureImage();
@@ -412,6 +424,10 @@ private:
 	// generate mipmaps
 	void generateMipmaps(VkImage image, VkFormat imageFormat, int32_t texWidth, int32_t texHeight, uint32_t mipLevels);
 
+	// Multisampling
+	void createColorResources();
+	void destroyColorResources();
+
 	// utils
 	QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
 	bool isDeviceSuitable(VkPhysicalDevice device);
@@ -422,7 +438,8 @@ private:
 	void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 	VkCommandBuffer beginSingleTimeCommands();
 	void endSingleTimeCommands(VkCommandBuffer& commandBuffer);
-	void transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mipLevels);
+	void transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout,
+	                           uint32_t mipLevels);
 	void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
 	VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, uint32_t mipLevels);
 	VkFormat findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling,
@@ -446,6 +463,23 @@ private:
 	static bool hasStencilComponent(VkFormat format)
 	{
 		return format == VK_FORMAT_D32_SFLOAT_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT;
+	}
+
+	VkSampleCountFlagBits getMaxUsableSampleCount()
+	{
+		VkPhysicalDeviceProperties physicalDeviceProperties;
+		vkGetPhysicalDeviceProperties(physicalDevice, &physicalDeviceProperties);
+
+		VkSampleCountFlags counts = physicalDeviceProperties.limits.framebufferColorSampleCounts &
+			physicalDeviceProperties.limits.framebufferDepthSampleCounts;
+		if (counts & VK_SAMPLE_COUNT_64_BIT) { return VK_SAMPLE_COUNT_64_BIT; }
+		if (counts & VK_SAMPLE_COUNT_32_BIT) { return VK_SAMPLE_COUNT_32_BIT; }
+		if (counts & VK_SAMPLE_COUNT_16_BIT) { return VK_SAMPLE_COUNT_16_BIT; }
+		if (counts & VK_SAMPLE_COUNT_8_BIT) { return VK_SAMPLE_COUNT_8_BIT; }
+		if (counts & VK_SAMPLE_COUNT_4_BIT) { return VK_SAMPLE_COUNT_4_BIT; }
+		if (counts & VK_SAMPLE_COUNT_2_BIT) { return VK_SAMPLE_COUNT_2_BIT; }
+
+		return VK_SAMPLE_COUNT_1_BIT;
 	}
 };
 
